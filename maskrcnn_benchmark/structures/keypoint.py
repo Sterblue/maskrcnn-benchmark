@@ -147,6 +147,8 @@ keypoint_task_dict = {
 # TODO this doesn't look great
 PersonKeypoints.FLIP_INDS = _create_flip_indices(
     PersonKeypoints.NAMES, PersonKeypoints.FLIP_MAP)
+WindTurbineCameraOrientationKeypoints.FLIP_INDS = _create_flip_indices(
+    WindTurbineCameraOrientationKeypoints.NAMES, WindTurbineCameraOrientationKeypoints.FLIP_MAP)
 
 
 def kp_connections(keypoints):
@@ -171,6 +173,7 @@ def kp_connections(keypoints):
 
 
 PersonKeypoints.CONNECTIONS = kp_connections(PersonKeypoints.NAMES)
+WindTurbineCameraOrientationKeypoints.CONNECTIONS = []
 
 
 # TODO make this nicer, this is a direct translation from C2 (but removing the inner loop)

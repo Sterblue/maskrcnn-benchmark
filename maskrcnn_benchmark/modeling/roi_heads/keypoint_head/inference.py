@@ -1,11 +1,16 @@
+from maskrcnn_benchmark.structures.bounding_box import BoxList
+import cv2
+import numpy as np
+from maskrcnn_benchmark.structures.keypoint import PersonKeypoints, keypoint_task_dict
 import torch
 from torch import nn
 
 
 class KeypointPostProcessor(nn.Module):
-    def __init__(self, keypointer=None):
+    def __init__(self, keypointer=None, cfg=None):
         super(KeypointPostProcessor, self).__init__()
         self.keypointer = keypointer
+        self.cfg = cfg
 
     def forward(self, x, boxes):
         mask_prob = x
@@ -24,7 +29,11 @@ class KeypointPostProcessor(nn.Module):
             bbox = BoxList(box.bbox, box.size, mode="xyxy")
             for field in box.fields():
                 bbox.add_field(field, box.get_field(field))
-            prob = PersonKeypoints(prob, box.size)
+            try:
+                prob = keypoint_task_dict[self.cfg.MODEL.get(
+                    "KEYPOINT_TASK")](prob, box.size)
+            except:
+                prob = keypoint_task_dict["PersonKeypoints"](prob, box.size)
             prob.add_field("logits", score)
             bbox.add_field("keypoints", prob)
             results.append(bbox)
@@ -33,8 +42,6 @@ class KeypointPostProcessor(nn.Module):
 
 
 # TODO remove and use only the Keypointer
-import numpy as np
-import cv2
 
 
 def heatmaps_to_keypoints(maps, rois):
@@ -94,10 +101,6 @@ def heatmaps_to_keypoints(maps, rois):
     return np.transpose(xy_preds, [0, 2, 1]), end_scores
 
 
-from maskrcnn_benchmark.structures.bounding_box import BoxList
-from maskrcnn_benchmark.structures.keypoint import PersonKeypoints
-
-
 class Keypointer(object):
     """
     Projects a set of masks in an image on the locations
@@ -121,5 +124,5 @@ class Keypointer(object):
 
 def make_roi_keypoint_post_processor(cfg):
     keypointer = Keypointer()
-    keypoint_post_processor = KeypointPostProcessor(keypointer)
+    keypoint_post_processor = KeypointPostProcessor(keypointer, cfg)
     return keypoint_post_processor
