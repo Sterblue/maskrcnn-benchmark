@@ -11,6 +11,7 @@ from maskrcnn_benchmark.utils.metric_logger import MetricLogger
 
 from apex import amp
 
+
 def reduce_loss_dict(loss_dict):
     """
     Reduce the loss dictionary from all processes so that process with rank
@@ -55,9 +56,10 @@ def do_train(
     start_training_time = time.time()
     end = time.time()
     for iteration, (images, targets, _) in enumerate(data_loader, start_iter):
-        
+
         if any(len(target) < 1 for target in targets):
-            logger.error(f"Iteration={iteration + 1} || Image Ids used for training {_} || targets Length={[len(target) for target in targets]}" )
+            logger.error(
+                f"Iteration={iteration + 1} || Image Ids used for training {_} || targets Length={[len(target) for target in targets]}")
             continue
         data_time = time.time() - end
         iteration = iteration + 1
@@ -67,11 +69,11 @@ def do_train(
 
         images = images.to(device)
         targets = [target.to(device) for target in targets]
-        try:
-            loss_dict = model(images, targets)
-        except Exception as e:
-            print(f"ERROR {e}")
-            continue
+        # try:
+        loss_dict = model(images, targets)
+        # except Exception as e:
+        #     print(f"ERROR {e}")
+        #     continue
 
         losses = sum(loss for loss in loss_dict.values())
 
