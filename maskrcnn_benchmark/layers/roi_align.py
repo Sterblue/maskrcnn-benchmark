@@ -6,13 +6,8 @@ from torch.autograd.function import once_differentiable
 from torch.nn.modules.utils import _pair
 
 from maskrcnn_benchmark import _C
+from apex import amp
 
-try:
-    from apex import amp
-    use_amp = True
-except Exception as e:
-    print("Couldn't load apex, because you are running on cpu probably, and couldn't detect cuda !")
-    use_amp = False
 
 class _ROIAlign(Function):
     @staticmethod
@@ -52,6 +47,7 @@ class _ROIAlign(Function):
 
 roi_align = _ROIAlign.apply
 
+
 class ROIAlign(nn.Module):
     def __init__(self, output_size, spatial_scale, sampling_ratio):
         super(ROIAlign, self).__init__()
@@ -60,10 +56,6 @@ class ROIAlign(nn.Module):
         self.sampling_ratio = sampling_ratio
 
     def forward(self, input, rois):
-        if use_amp:
-            return amp.float_function(roi_align(
-                input, rois, self.output_size, self.spatial_scale, self.sampling_ratio
-            ))
         return roi_align(
             input, rois, self.output_size, self.spatial_scale, self.sampling_ratio
         )
