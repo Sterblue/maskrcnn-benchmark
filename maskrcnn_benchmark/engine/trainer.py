@@ -67,11 +67,7 @@ def do_train(
 
         images = images.to(device)
         targets = [target.to(device) for target in targets]
-        try:
-            loss_dict = model(images, targets)
-        except Exception as e:
-            print(f"ERROR {e}")
-            continue
+        loss_dict = model(images, targets)
 
         losses = sum(loss for loss in loss_dict.values())
 
