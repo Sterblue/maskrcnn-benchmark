@@ -82,6 +82,9 @@ def heatmaps_to_keypoints(maps, rois):
         roi_map = cv2.resize(
             maps[i], (roi_map_width, roi_map_height), interpolation=cv2.INTER_CUBIC
         )
+        # case where there is only 1 keypoint
+        if len(roi_map.shape) == 2:
+            roi_map = np.expand_dims(roi_map, 2)
         # Bring back to CHW
         roi_map = np.transpose(roi_map, [2, 0, 1])
         # roi_map_probs = scores_to_probs(roi_map.copy())
