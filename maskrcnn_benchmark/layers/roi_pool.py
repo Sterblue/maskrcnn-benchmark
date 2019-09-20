@@ -6,7 +6,12 @@ from torch.autograd.function import once_differentiable
 from torch.nn.modules.utils import _pair
 
 from maskrcnn_benchmark import _C
-from apex import amp
+use_amp = False
+try:
+    from apex import amp
+    use_amp = True
+except Exception as e:
+    print("Couldn't load apex, because you are running on cpu probably, and couldn't detect cuda !")
 
 
 class _ROIPool(Function):
@@ -55,6 +60,8 @@ class ROIPool(nn.Module):
 
     def forward(self, input, rois):
         return roi_pool(input, rois, self.output_size, self.spatial_scale)
+    if use_amp:
+        forward = amp.float_function(forward)
 
     def __repr__(self):
         tmpstr = self.__class__.__name__ + "("
