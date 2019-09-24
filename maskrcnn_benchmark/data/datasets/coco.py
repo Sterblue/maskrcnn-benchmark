@@ -68,7 +68,6 @@ class COCODataset(torchvision.datasets.coco.CocoDetection):
 
     def __getitem__(self, idx):
         img, anno = super(COCODataset, self).__getitem__(idx)
-        print("image", img["id"])
         print("annotations", [ann["id"] for ann in anno])
         # filter crowd annotations
         # TODO might be better to add an extra field
