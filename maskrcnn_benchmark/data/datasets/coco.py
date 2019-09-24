@@ -54,7 +54,8 @@ class COCODataset(torchvision.datasets.coco.CocoDetection):
                     ids.append(img_id)
             self.ids = ids
 
-        self.categories = {cat['id']: cat['name'] for cat in self.coco.cats.values()}
+        self.categories = {cat['id']: cat['name']
+                           for cat in self.coco.cats.values()}
 
         self.json_category_id_to_contiguous_id = {
             v: i + 1 for i, v in enumerate(self.coco.getCatIds())
@@ -67,7 +68,8 @@ class COCODataset(torchvision.datasets.coco.CocoDetection):
 
     def __getitem__(self, idx):
         img, anno = super(COCODataset, self).__getitem__(idx)
-
+        print("image", img["id"])
+        print("annotations", [ann["id"] for ann in anno])
         # filter crowd annotations
         # TODO might be better to add an extra field
         anno = [obj for obj in anno if obj["iscrowd"] == 0]
