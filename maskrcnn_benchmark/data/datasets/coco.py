@@ -68,7 +68,7 @@ class COCODataset(torchvision.datasets.coco.CocoDetection):
 
     def __getitem__(self, idx):
         img, anno = super(COCODataset, self).__getitem__(idx)
-        print("annotations", [ann["id"] for ann in anno])
+
         # filter crowd annotations
         # TODO might be better to add an extra field
         anno = [obj for obj in anno if obj["iscrowd"] == 0]
@@ -92,8 +92,11 @@ class COCODataset(torchvision.datasets.coco.CocoDetection):
             keypoints = PersonKeypoints(keypoints, img.size)
             target.add_field("keypoints", keypoints)
 
-        target = target.clip_to_image(remove_empty=True)
-
+        try:
+            target = target.clip_to_image(remove_empty=True)
+        except Exception as e:
+            print("annotations", [ann["id"] for ann in anno])
+            print(e)
         if self._transforms is not None:
             img, target = self._transforms(img, target)
 
