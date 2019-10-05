@@ -15,6 +15,7 @@ from maskrcnn_benchmark.engine.inference import inference
 
 from apex import amp
 
+
 def reduce_loss_dict(loss_dict):
     """
     Reduce the loss dictionary from all processes so that process with rank
@@ -70,9 +71,10 @@ def do_train(
     dataset_names = cfg.DATASETS.TEST
 
     for iteration, (images, targets, _) in enumerate(data_loader, start_iter):
-        
+
         if any(len(target) < 1 for target in targets):
-            logger.error(f"Iteration={iteration + 1} || Image Ids used for training {_} || targets Length={[len(target) for target in targets]}" )
+            logger.error(
+                f"Iteration={iteration + 1} || Image Ids used for training {_} || targets Length={[len(target) for target in targets]}")
             continue
         data_time = time.time() - end
         iteration = iteration + 1
@@ -80,7 +82,12 @@ def do_train(
 
         images = images.to(device)
         targets = [target.to(device) for target in targets]
-        loss_dict = model(images, targets)
+        try:
+            loss_dict = model(images, targets)
+        except Exception as e:
+            logger.error(
+                f"Iteration={iteration + 1} || Image Ids used for training {_} || Error={e}")
+            continue
 
         losses = sum(loss for loss in loss_dict.values())
 
@@ -131,7 +138,8 @@ def do_train(
                 model,
                 # The method changes the segmentation mask format in a data loader,
                 # so every time a new data loader is created:
-                make_data_loader(cfg, is_train=False, is_distributed=(get_world_size() > 1), is_for_period=True),
+                make_data_loader(cfg, is_train=False, is_distributed=(
+                    get_world_size() > 1), is_for_period=True),
                 dataset_name="[Validation]",
                 iou_types=iou_types,
                 box_only=False if cfg.MODEL.RETINANET_ON else cfg.MODEL.RPN_ONLY,
@@ -150,7 +158,8 @@ def do_train(
                     loss_dict = model(images_val, targets_val)
                     losses = sum(loss for loss in loss_dict.values())
                     loss_dict_reduced = reduce_loss_dict(loss_dict)
-                    losses_reduced = sum(loss for loss in loss_dict_reduced.values())
+                    losses_reduced = sum(
+                        loss for loss in loss_dict_reduced.values())
                     meters_val.update(loss=losses_reduced, **loss_dict_reduced)
             synchronize()
             logger.info(
