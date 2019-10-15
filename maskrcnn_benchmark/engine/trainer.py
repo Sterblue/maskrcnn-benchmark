@@ -72,6 +72,8 @@ def do_train(
     time_check0 = []
     time_check1 = []
     time_check2 = []
+    time_check3 = []
+    time_check4 = []
 
     for iteration, (images, targets, _) in enumerate(data_loader, start_iter):
         time_check0.append(time.time())
@@ -86,7 +88,9 @@ def do_train(
         images = images.to(device)
         targets = [target.to(device) for target in targets]
         try:
+            time_check3.append(time.time())
             loss_dict = model(images, targets)
+            time_check4.append(time.time())
         except Exception as e:
             logger.error(
                 f"Iteration={iteration + 1} || Image Ids used for training {_} || Error={e}")
@@ -98,6 +102,7 @@ def do_train(
         loss_dict_reduced = reduce_loss_dict(loss_dict)
         losses_reduced = sum(loss for loss in loss_dict_reduced.values())
         meters.update(loss=losses_reduced, **loss_dict_reduced)
+
         time_check1.append(time.time())
 
         optimizer.zero_grad()
@@ -135,12 +140,14 @@ def do_train(
                 )
             )
             logger.info(
-                "*** profiling *** \n average time forward {} \n average time backward {} \n average time data loading {} \n ******************".format(
-                    (sum(time_check1) - sum(time_check0)) / 20, (sum(time_check0[1:]) - sum(time_check2[:-1])) / 19, (sum(time_check2) - sum(time_check1)) / 20)
-            )
+                "\n *** profiling *** \n average time forward {} \n average time data loading {} \n average time backward {} \n average time ONLY forward {}******************".format(
+                    (sum(time_check1) - sum(time_check0)) / 20, (sum(time_check0[1:]) - sum(time_check2[:-1])) / 19, (sum(
+                        time_check2) - sum(time_check1)) / 20, (sum(time_check4) - sum(time_check3)) / 20))
             time_check0 = []
             time_check1 = []
             time_check2 = []
+            time_check3 = []
+            time_check4 = []
         if iteration % checkpoint_period == 0:
             checkpointer.save("model_{:07d}".format(iteration), **arguments)
         if data_loader_val is not None and test_period > 0 and iteration % test_period == 0:
