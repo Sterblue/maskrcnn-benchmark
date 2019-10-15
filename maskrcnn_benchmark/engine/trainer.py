@@ -84,9 +84,14 @@ def do_train(
         data_time = time.time() - end
         iteration = iteration + 1
         arguments["iteration"] = iteration
+        logger.info(
+            f"Iteration={iteration + 1} || Image Ids used for training {_} || targets Length={[len(target) for target in targets]}")
 
         images = images.to(device)
         targets = [target.to(device) for target in targets]
+        logger.info(
+            "images tensor size: {}".format(images.size())
+        )
         try:
             time_check3.append(time.time())
             loss_dict = model(images, targets)
@@ -140,7 +145,7 @@ def do_train(
                 )
             )
             logger.info(
-                "\n *** profiling *** \n average time forward {} \n average time data loading {} \n average time backward {} \n average time ONLY forward {}******************".format(
+                "\n *** profiling *** \n average time forward {} \n average time data loading {} \n average time backward {} \n average time ONLY forward {} \n ******************".format(
                     (sum(time_check1) - sum(time_check0)) / 20, (sum(time_check0[1:]) - sum(time_check2[:-1])) / 19, (sum(
                         time_check2) - sum(time_check1)) / 20, (sum(time_check4) - sum(time_check3)) / 20))
             time_check0 = []
