@@ -69,9 +69,12 @@ def do_train(
     if cfg.MODEL.KEYPOINT_ON:
         iou_types = iou_types + ("keypoints",)
     dataset_names = cfg.DATASETS.TEST
+    time_check0 = []
+    time_check1 = []
+    time_check2 = []
 
     for iteration, (images, targets, _) in enumerate(data_loader, start_iter):
-
+        time_check0.append(time.time())
         if any(len(target) < 1 for target in targets):
             logger.error(
                 f"Iteration={iteration + 1} || Image Ids used for training {_} || targets Length={[len(target) for target in targets]}")
@@ -95,6 +98,7 @@ def do_train(
         loss_dict_reduced = reduce_loss_dict(loss_dict)
         losses_reduced = sum(loss for loss in loss_dict_reduced.values())
         meters.update(loss=losses_reduced, **loss_dict_reduced)
+        time_check1.append(time.time())
 
         optimizer.zero_grad()
         # Note: If mixed precision is not used, this ends up doing nothing
@@ -103,6 +107,7 @@ def do_train(
             scaled_losses.backward()
         optimizer.step()
         scheduler.step()
+        time_check2.append(time.time())
 
         batch_time = time.time() - end
         end = time.time()
@@ -129,6 +134,13 @@ def do_train(
                     memory=torch.cuda.max_memory_allocated() / 1024.0 / 1024.0,
                 )
             )
+            logger.info(
+                "*** profiling *** \n average time forward {} \n average time backward {} \n average time data loading {} \n ******************".format(
+                    (sum(time_check1) - sum(time_check0)) / 20, (sum(time_check0[1:]) - sum(time_check2[:-1])) / 19, (sum(time_check2) - sum(time_check1)) / 20)
+            )
+            time_check0 = []
+            time_check1 = []
+            time_check2 = []
         if iteration % checkpoint_period == 0:
             checkpointer.save("model_{:07d}".format(iteration), **arguments)
         if data_loader_val is not None and test_period > 0 and iteration % test_period == 0:
